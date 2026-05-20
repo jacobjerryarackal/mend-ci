@@ -1,53 +1,113 @@
 // /app/api/agent/route.ts
-import { VertexAI } from '@google-cloud/vertexai';
+import { VertexAI, FunctionDeclaration, SchemaType } from '@google-cloud/vertexai';
 import { NextResponse } from 'next/server';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
-// Initialize Vertex AI with your project credentials
+// 1. Initialize Vertex AI
 const vertexAI = new VertexAI({
   project: process.env.GOOGLE_CLOUD_PROJECT as string,
   location: 'us-central1', 
 });
 
+// Helper function to map MCP tools to Vertex AI format
+function mcpToolToVertexTool(mcpTool: any): FunctionDeclaration {
+  return {
+    name: mcpTool.name,
+    description: mcpTool.description || `Executes the ${mcpTool.name} tool.`,
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: mcpTool.inputSchema?.properties || {},
+      required: mcpTool.inputSchema?.required || [],
+    },
+  };
+}
+
 export async function POST(req: Request) {
   try {
-    // We will pass the failing pipeline details from the frontend/webhook
     const { pipelineId, repositoryId } = await req.json();
 
-    // Initialize Gemini 3 Pro with strict SRE instructions
+    // 2. Initialize the MCP Client and connect to GitLab
+    const transport = new StdioClientTransport({
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-gitlab'],
+      env: {
+        ...process.env,
+        GITLAB_PERSONAL_ACCESS_TOKEN: process.env.GITLAB_PERSONAL_ACCESS_TOKEN!,
+        GITLAB_API_URL: process.env.GITLAB_API_URL || "https://gitlab.com/api/v4"
+      }
+    });
+
+    const mcpClient = new Client({ name: 'MendCI-Agent', version: '1.0.0' }, { capabilities: {} });
+    await mcpClient.connect(transport);
+
+    // 3. Fetch Tools from GitLab MCP and format them for Gemini
+    const mcpToolsResponse = await mcpClient.listTools();
+    const vertexTools = mcpToolsResponse.tools.map(mcpToolToVertexTool);
+
+    // 4. Initialize Gemini 3 with the injected tools
     const model = vertexAI.preview.getGenerativeModel({
       model: 'gemini-3-pro',
       systemInstruction: {
         role: 'system',
         parts: [{
-          text: `You are MendCI, an autonomous MERN-stack Site Reliability Engineer. 
-          Your ONLY objective is to resolve failing GitLab CI/CD pipelines.
-          
-          Execution Workflow:
-          1. Analyze the failing pipeline ID: ${pipelineId} for repository: ${repositoryId}.
-          2. Use your connected GitLab MCP tools to fetch the exact job trace and error logs.
-          3. Identify the syntax or configuration error (focusing on Next.js, React, Node.js, or MongoDB).
-          4. Fetch the broken file's contents.
-          5. Generate the corrected code patch.
-          6. Use the GitLab MCP tool to open a Merge Request with your fix.
-          
-          CRITICAL: Do not ask for user permission to create the Merge Request. Autonomously execute the tool and return the Merge Request URL in your final JSON response.`
+          text: `You are MendCI, an autonomous Site Reliability Engineer. 
+          Resolve pipeline ID: ${pipelineId} for repo: ${repositoryId}.
+          Fetch the failing log, analyze the error, rewrite the file, and create a Merge Request.
+          Return the Merge Request URL in your final response.`
         }]
       },
-      // In Phase 5b, we will bind the MCP tools here
-      tools: [], 
+      tools: [{ functionDeclarations: vertexTools }], 
     });
 
-    // Initial prompt to kick off the autonomous loop
-    const prompt = `Pipeline ${pipelineId} just failed. Begin triage and remediation immediately.`;
-    
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const agentResponse = response.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated";
+    // 5. Execute the Agentic Loop
+    const chat = model.startChat();
+    let result = await chat.sendMessage(`Pipeline ${pipelineId} just failed. Fix it.`);
+    let responseText = "";
 
-    return NextResponse.json({ success: true, agentResponse });
+    // If Gemini decides to call a tool, it will return a functionCall
+    let parts = result.response.candidates?.[0]?.content?.parts || [];
+
+    let functionCallPart = parts.find(
+    (part: any) => part.functionCall
+    );
+
+    while (functionCallPart?.functionCall) {
+    const call = functionCallPart.functionCall;
+      
+      // Execute the tool locally via the MCP Client
+      const toolResult = await mcpClient.callTool({
+        name: call.name,
+        arguments: call.args as Record<string, unknown>
+      });
+
+      // Pass the tool's result back to Gemini so it can continue reasoning
+      result = await chat.sendMessage([{
+        functionResponse: {
+            name: call.name!,
+            response: {
+            result: toolResult.content
+            }
+        }
+        }]);
+
+        parts = result.response.candidates?.[0]?.content?.parts || [];
+
+        functionCallPart = parts.find(
+        (part: any) => part.functionCall
+        );
+    }
+
+    // Capture the final human-readable string (which should contain the MR link)
+    responseText = result.response.candidates?.[0]?.content?.parts?.[0]?.text || "Execution complete.";
+    
+    // Clean up
+    await transport.close();
+
+    return NextResponse.json({ success: true, agentResponse: responseText });
 
   } catch (error) {
     console.error("Agent Execution Error:", error);
-    return NextResponse.json({ success: false, error: "Failed to deploy agent" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Agent loop failed." }, { status: 500 });
   }
 }
