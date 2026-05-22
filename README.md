@@ -18,22 +18,9 @@ By keeping a **Human-in-the-Loop** design parameter, developers retain full vali
 
 ## 🏗️ System Architecture
 
-```text
-[ GitLab Pipeline Fails ] ──( Webhook Trigger )──> [ Next.js API Control Center ]
-                                                           │
-                                                           ▼
-                                                [ Google Cloud Run App ]
-                                             (Google GenAI + GitLab MCP)
-                                                           │
-     ┌───────────────────┬─────────────────────────┴────────────────────────┐
-     ▼                   ▼                                                  ▼
-[ Tool: get_pipeline ] [ Tool: get_job_trace ]                    [ Tool: create_merge_request ]
-     │                   │                                                  │
-     └─────────┬─────────┘                                                  │
-               ▼                                                            ▼
-     [ Gemini Core Triage ] ────────────────────────────────────────> [ Open Fix Branch ]
+MendCI processes telemetry over a multi-layered, tool-enabled automation topology:
 
-```
+![MendCI Orchestration Topology](/assets/screenshots/architecture.png)
 
 ---
 
@@ -160,7 +147,24 @@ If an infrastructure tool returns a configuration exception mid-run, the graph h
 ---
 
 ## 🌐 Demo Video
+![Demo Video](/assets/demo/DEMO.mp4)
+
 
 ---
 
 ## 🌐 Screenshots
+
+![Home Screen](/assets/screenshots/home1.png)
+![Home Screen](/assets/screenshots/home2.png)
+
+![Execution](/assets/screenshots/execution1.png)
+![Execution](/assets/screenshots/execution2.png)
+
+![Result Remediation](/assets/screenshots/result.png)
+
+![Failure Points](/assets/screenshots/error.png)
+
+![Merge Request Output](/assets/screenshots/merge_request1.png)
+![Merge Request Output](/assets/screenshots/merge_request2.png)
+![Merge Request Output](/assets/screenshots/merge_request3.png)
+![Merge Request Output](/assets/screenshots/merge_request4.png)
