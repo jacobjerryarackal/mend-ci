@@ -155,6 +155,5 @@ If an infrastructure tool returns a configuration exception mid-run, the graph h
 
 ## 🌐 Live Deployments & Presentation Assets
 
-* **Live Dashboard Application:** [https://mend-ci-dashboard.vercel.app](https://www.google.com/search?q=https://mend-ci-dashboard.vercel.app) *(Replace with your final Vercel or Cloud Run link)*
+* **Live Dashboard Application:** [https://mend-ci.vercel.app/](https://www.google.com/search?q=https://mend-ci.vercel.app/) *(Replace with your final Vercel or Cloud Run link)*
 * **Target Presentation Video Walkthrough:** [https://www.loom.com/share/...](https://www.google.com/search?q=https://www.loom.com/share/...) *(Replace with your final Loom link)*
-* **Open Source Repository Hub:** [https://gitlab.com/jacobjerryarackal123-group/jacobjerryarackal123-project](https://www.google.com/search?q=https://gitlab.com/jacobjerryarackal123-group/jacobjerryarackal123-project)
