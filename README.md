@@ -32,3 +32,14 @@ By keeping a "human-in-the-loop," developers can approve and merge autonomous fi
      └─────────┬─────────┘                                                  │
                ▼                                                            ▼
      [ Gemini 3 Reasoning ] ────────────────────────────────────────> [ Open Fix Branch ]
+
+---
+
+## ❓ What is this & Why do we need it?
+
+**What is this?**  
+MendCI is an AI-driven DevOps assistant that integrates directly into your version control workflow. Think of it as a first responder for broken builds.
+
+**Why do we need this?**  
+Context switching is expensive. When a pipeline fails, developers have to stop what they're doing, hunt down the CI logs, figure out what went wrong, test a fix, and push again. This completely breaks their flow state. MendCI handles this tedious triage and repair process autonomously in seconds. Developers stay perfectly in the loop by simply reviewing and clicking "Merge" on the generated fix.
+
