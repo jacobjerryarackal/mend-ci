@@ -148,7 +148,7 @@ If an infrastructure tool returns a configuration exception mid-run, the graph h
 
 ## 🌐 Demo Video
 
-👉 **[Click Here to Watch the Full Presentation Walkthrough](https://vimeo.com/1194660093?fl=ip&fe=ec)**
+👉 **[Click Here to Watch the Full Presentation Walkthrough](https://vimeo.com/1194660093?share=copy&fl=sv&fe=ci)**
 
 
 ---
