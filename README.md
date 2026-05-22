@@ -1,45 +1,39 @@
 # MendCI: The Self-Healing CI/CD Agent
 
-MendCI is an autonomous, context-aware AI agent designed to monitor, diagnose, and repair broken MERN/Next.js CI/CD pipelines in real time. Instead of just alerting developers to a build failure, MendCI steps into the pipeline, analyzes the error logs, locates the bug in the repository, writes the fix, and automatically opens a Merge Request (MR) with the patch. 
+MendCI is an autonomous, context-aware AI agent designed to monitor, diagnose, and repair broken Next.js and Node.js CI/CD pipelines in real time. Instead of just alerting developers to a build failure, MendCI steps directly into the pipeline graph, extracts raw trace logs, pinpoints systemic bugs, writes isolated code patches, and deploys Merge Requests (MRs) autonomously.
 
-By keeping a "human-in-the-loop," developers can approve and merge autonomous fixes with a single click from a unified dashboard.
+By leveraging a clear "human-in-the-loop" pattern, engineers retain complete control—reviewing and merging production-grade fixes with a single click from an interactive, high-fidelity metrics dashboard.
 
 ---
 
 ## 🚀 Key Features
 
-- **Automated Failure Triage:** Listens via webhooks to catch failing GitLab/GitHub pipelines the exact second they crash.
-- **Deep Log Analysis:** Leverages Google Gemini 3 to parse raw job traces and pinpoint syntax or configuration errors.
-- **Context-Aware Repair:** Clones the targeted codebase context to write production-grade code patches specifically tailored for Next.js and Node.js environments.
-- **Autonomous Git Injection:** Uses the Model Context Protocol (MCP) to securely open branches, commit code, and push Merge Requests directly back to your version control provider.
-- **Developer Control Center:** A beautiful Next.js dashboard displaying side-by-side code diffs of the agent's proposed fixes.
+- **Automated Failure Triage:** Listens dynamically via repository interfaces to intercept and resolve pipeline failures the exact second they crash.
+- **Dynamic Target Configuration:** Exposes fully interactive control center inputs allowing engineers to seamlessly target any repository workspace path or pipeline ID trace on the fly.
+- **Multi-Turn Context Reasoning:** Utilizes `gemini-2.5-pro` via the official Google Cloud GenAI SDK to deeply evaluate environment schemas and raw container failures.
+- **Asynchronous MCP Bridge:** Implements a low-latency, raw JSON-RPC Client running over standard I/O (stdio) to interact securely with the open-source `@modelcontextprotocol/server-gitlab` engine.
+- **Agentic Telemetry Map:** Features a beautifully aligned, live-updating visual tree graph that maps out every granular step of the agent's logic pathway in real time.
 
 ---
 
 ## 🏗️ System Architecture
 
 ```text
-[ GitLab Pipeline Fails ] ──( Webhook )──> [ Next.js API Trigger ]
-                                                   │
-                                                   ▼
-                                        [ Google Cloud Run App ]
-                                        (Gemini 3 + GitLab MCP)
-                                                   │
-     ┌───────────────────┬─────────────────────────┴────────────────────────┐
-     ▼                   ▼                                                  ▼
-[ Tool 1: Get Logs ] [ Tool 2: Fetch Code ]                       [ Tool 3: Create MR ]
-     │                   │                                                  │
-     └─────────┬─────────┘                                                  │
-               ▼                                                            ▼
-     [ Gemini 3 Reasoning ] ────────────────────────────────────────> [ Open Fix Branch ]
-
----
-
-## ❓ What is this & Why do we need it?
-
-**What is this?**  
-MendCI is an AI-driven DevOps assistant that integrates directly into your version control workflow. Think of it as a first responder for broken builds.
-
-**Why do we need this?**  
-Context switching is expensive. When a pipeline fails, developers have to stop what they're doing, hunt down the CI logs, figure out what went wrong, test a fix, and push again. This completely breaks their flow state. MendCI handles this tedious triage and repair process autonomously in seconds. Developers stay perfectly in the loop by simply reviewing and clicking "Merge" on the generated fix.
-
+  [ GitLab Pipeline Fails ] 
+              │
+              ▼ (Interceptors)
+  [ Next.js Control Dashboard ] ──── (Reactive State UI Panel)
+              │
+              ▼ (Post Payload)
+  [ /api/agent Route Handler ]
+              │
+              ├─► [ Local JSON-RPC Bridge ] ──► [ MCP GitLab Server Node ]
+              │
+              ▼ (Context Optimization Engine)
+  [ Google GenAI: Gemini 2.5 Pro ]
+              │
+              ├─► Tool Loop 1: search_repositories (Map Numerical IDs)
+              ├─► Tool Loop 2: get_file_contents (Locate Pipeline Configs)
+              ├─► Tool Loop 3: create_branch (Isolate Ref Trees)
+              ├─► Tool Loop 4: create_or_update_file (Inject YAML Patches)
+              └─► Tool Loop 5: create_merge_request (Open Human Review Code)
